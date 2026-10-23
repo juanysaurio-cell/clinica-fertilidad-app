@@ -34,10 +34,10 @@ const DOCTORS: Doctor[] = [
 ];
 
 export const HomeScreen: React.FC = () => {
-  // Pestañas: 'home' (vacía/inicio), 'categories' (categorías con buscador y detalle), 'staff' (personal clínico)
-  const [activeTab, setActiveTab] = useState<'home' | 'categories' | 'staff'>('categories');
+  // Pestañas únicas: 'categories' y 'staff'
+  const [activeTab, setActiveTab] = useState<'categories' | 'staff'>('categories');
   
-  // Estado para manejar la "sub-página" o vista de detalle del tratamiento seleccionado
+  // Estado para la página de detalle
   const [selectedService, setSelectedService] = useState<FertilityService | null>(null);
 
   // --- CATEGORÍAS (Tratamientos) ---
@@ -75,17 +75,8 @@ export const HomeScreen: React.FC = () => {
   // VISTAS DE LAS PESTAÑAS
   // ==========================================
 
-  // Pestaña 1: Inicio (Vacía / Bienvenida limpia como pediste)
-  const renderHomeWelcome = () => (
-    <View style={styles.welcomeContainer}>
-      <Text style={styles.welcomeTitle}>Bienvenido a la Clínica</Text>
-      <Text style={styles.welcomeSubtitle}>Selecciona una opción en el menú inferior para explorar las categorías de tratamientos o consultar nuestro personal clínico.</Text>
-    </View>
-  );
-
-  // Pestaña 2: Categorías (Con Buscador y soporte para ver la página de Detalle)
+  // Pestaña: Categorías
   const renderCategoriesView = () => {
-    // Si hay un servicio seleccionado, mostramos la "nueva página" de detalle
     if (selectedService) {
       return (
         <ScrollView contentContainerStyle={styles.detailContainer} showsVerticalScrollIndicator={false}>
@@ -112,7 +103,6 @@ export const HomeScreen: React.FC = () => {
       );
     }
 
-    // Vista principal de Categorías con su barra de búsqueda
     return (
       <View style={styles.moduleContainer}>
         <Text style={styles.sectionTitle}>Categorías de Tratamientos</Text>
@@ -147,7 +137,7 @@ export const HomeScreen: React.FC = () => {
     );
   };
 
-  // Pestaña 3: Personal Clínico (Buscador de especialistas)
+  // Pestaña: Personal Clínico
   const renderStaffView = () => (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -192,27 +182,19 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content"  />
+      <StatusBar barStyle="dark-content" />
       
       {/* CONTENIDO SEGÚN LA PESTAÑA */}
       <View style={styles.mainContent}>
-        {activeTab === 'home' && renderHomeWelcome()}
         {activeTab === 'categories' && renderCategoriesView()}
         {activeTab === 'staff' && renderStaffView()}
       </View>
 
-      {/* MENÚ DE NAVEGACIÓN INFERIOR */}
+      {/* MENÚ DE NAVEGACIÓN INFERIOR (Solo 2 botones) */}
       <View style={styles.navigationBar}>
         <Pressable
-          style={[styles.navButton, activeTab === 'home' && styles.navButtonActive]}
-          onPress={() => { setActiveTab('home'); setSelectedService(null); }}
-        >
-          <Text style={[styles.navText, activeTab === 'home' && styles.navTextActive]}>Inicio</Text>
-        </Pressable>
-
-        <Pressable
           style={[styles.navButton, activeTab === 'categories' && styles.navButtonActive]}
-          onPress={() => { setActiveTab('categories'); }}
+          onPress={() => setActiveTab('categories')}
         >
           <Text style={[styles.navText, activeTab === 'categories' && styles.navTextActive]}>Categorías</Text>
         </Pressable>
@@ -233,10 +215,6 @@ const styles = StyleSheet.create({
   mainContent: { flex: 1 },
   moduleContainer: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
   sectionTitle: { fontSize: 22, fontWeight: '800', color: '#0F172A', marginBottom: 16 },
-  
-  welcomeContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  welcomeTitle: { fontSize: 26, fontWeight: '800', color: '#0F172A', marginBottom: 12, textAlign: 'center' },
-  welcomeSubtitle: { fontSize: 16, color: '#64748B', textAlign: 'center', lineHeight: 22 },
 
   separator: { height: 12 },
   textFlex: { flex: 1 },
@@ -256,7 +234,7 @@ const styles = StyleSheet.create({
   detailContainer: { padding: 16 },
   backButton: { marginBottom: 16, backgroundColor: '#E0F2FE', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, alignSelf: 'flex-start' },
   backButtonText: { color: '#0284C7', fontWeight: '700', fontSize: 14 },
-  detailImage: { width: '1005', height: 200, borderRadius: 16, marginBottom: 16, },
+  detailImage: { width: '100%', height: 200, borderRadius: 16, marginBottom: 16 },
   detailContent: { backgroundColor: '#FFFFFF', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0' },
   detailCategory: { fontSize: 12, fontWeight: '700', color: '#0284C7', marginBottom: 4, letterSpacing: 0.5 },
   detailTitle: { fontSize: 22, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
@@ -265,8 +243,8 @@ const styles = StyleSheet.create({
   detailText: { fontSize: 14, color: '#475569', lineHeight: 22 },
 
   navigationBar: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E8F0', paddingVertical: 10, paddingHorizontal: 8 },
-  navButton: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 8 },
+  navButton: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 8 },
   navButtonActive: { backgroundColor: '#E0F2FE' },
-  navText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
+  navText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
   navTextActive: { color: '#0284C7', fontWeight: '700' },
 });
