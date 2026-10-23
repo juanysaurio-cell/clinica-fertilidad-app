@@ -22,22 +22,31 @@ import { FertilityService } from '../types';
 interface Doctor {
   id: string;
   name: string;
-  specialty: string;
   phone: string;
-  imageUrl: string;
+  role: string;
 }
 
+// Lista ampliada a 15 especialistas con el formato simple/inicial
 const DOCTORS: Doctor[] = [
-  { id: '1', name: 'Dra. Marcela Restrepo', specialty: 'Medicina Reproductiva', phone: '3001234567', imageUrl: 'https://images.unsplash.com/photo-1594824813587-8e63a8a9bc47?w=400&auto=format&fit=crop&q=80' },
-  { id: '2', name: 'Dr. Alejandro Vargas', specialty: 'Embriología Clínica', phone: '3109876543', imageUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&auto=format&fit=crop&q=80' },
-  { id: '3', name: 'Dra. Sofía Benítez', specialty: 'Endocrinología Ginecológica', phone: '3205554433', imageUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&auto=format&fit=crop&q=80' },
+  { id: '1', name: 'Dra. Marcela Restrepo', phone: '3001234567', role: 'Medicina Reproductiva' },
+  { id: '2', name: 'Dr. Alejandro Vargas', phone: '3109876543', role: 'Embriología Clínica' },
+  { id: '3', name: 'Dra. Sofía Benítez', phone: '3205554433', role: 'Endocrinología Ginecológica' },
+  { id: '4', name: 'Dr. Carlos Mendoza', phone: '3154443322', role: 'Urología y Andrología' },
+  { id: '5', name: 'Dra. Camila Osorio', phone: '3187778899', role: 'Genética Médica' },
+  { id: '6', name: 'Dr. Fernando Gómez', phone: '3012223344', role: 'Cirugía Reproductiva' },
+  { id: '7', name: 'Dra. Valentina Ríos', phone: '3123334455', role: 'Preservación de la Fertilidad' },
+  { id: '8', name: 'Dr. Javier Morales', phone: '3145556677', role: 'Inmunología Reproductiva' },
+  { id: '9', name: 'Dra. Lucía Paredes', phone: '3167778899', role: 'Ecografía Especializada' },
+  { id: '10', name: 'Dr. Roberto Silva', phone: '3190001122', role: 'Embriólogo Senior' },
+  { id: '11', name: 'Dra. Natalia Castro', phone: '3051112233', role: 'Psicología Reproductiva' },
+  { id: '12', name: 'Dr. Gabriel Torres', phone: '3174445566', role: 'Inseminación Asistida' },
+  { id: '13', name: 'Dra. Diana Salazar', phone: '3118889900', role: 'Nutrición Reproductiva' },
+  { id: '14', name: 'Dr. Mauricio Fuentes', phone: '3023334455', role: 'Andrología Clínica' },
+  { id: '15', name: 'Dra. Patricia Herrera', phone: '3226667788', role: 'Coordinadora de Ovodonación' },
 ];
 
 export const HomeScreen: React.FC = () => {
-  // Pestañas únicas: 'categories' y 'staff'
   const [activeTab, setActiveTab] = useState<'categories' | 'staff'>('categories');
-  
-  // Estado para la página de detalle
   const [selectedService, setSelectedService] = useState<FertilityService | null>(null);
 
   // --- CATEGORÍAS (Tratamientos) ---
@@ -67,7 +76,7 @@ export const HomeScreen: React.FC = () => {
     if (!doctorQuery.trim()) return DOCTORS;
     const lower = doctorQuery.toLowerCase();
     return DOCTORS.filter(
-      (d) => d.name.toLowerCase().includes(lower) || d.specialty.toLowerCase().includes(lower)
+      (d) => d.name.toLowerCase().includes(lower) || d.role.toLowerCase().includes(lower) || d.phone.includes(lower)
     );
   }, [doctorQuery]);
 
@@ -75,7 +84,7 @@ export const HomeScreen: React.FC = () => {
   // VISTAS DE LAS PESTAÑAS
   // ==========================================
 
-  // Pestaña: Categorías
+  // Pestaña 1: Categorías
   const renderCategoriesView = () => {
     if (selectedService) {
       return (
@@ -137,7 +146,7 @@ export const HomeScreen: React.FC = () => {
     );
   };
 
-  // Pestaña: Personal Clínico
+  // Pestaña 2: Personal Clínico (Formato compacto original con avatar de iniciales)
   const renderStaffView = () => (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -146,7 +155,7 @@ export const HomeScreen: React.FC = () => {
 
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar especialista o área..."
+            placeholder="Buscar especialista o teléfono..."
             placeholderTextColor="#8B949E"
             value={doctorQuery}
             onChangeText={setDoctorQuery}
@@ -159,10 +168,12 @@ export const HomeScreen: React.FC = () => {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.doctorCard}>
-                <Image source={{ uri: item.imageUrl }} style={styles.doctorAvatar} />
+                <View style={styles.doctorAvatar}>
+                  <Text style={styles.avatarLetter}>{item.name.charAt(0)}</Text>
+                </View>
                 <View style={styles.textFlex}>
                   <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemCategory}>{item.specialty}</Text>
+                  <Text style={styles.itemCategory}>{item.role}</Text>
                   <Text style={styles.doctorPhone}>📞 {item.phone}</Text>
                 </View>
               </View>
@@ -182,15 +193,14 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content"  />
       
-      {/* CONTENIDO SEGÚN LA PESTAÑA */}
       <View style={styles.mainContent}>
         {activeTab === 'categories' && renderCategoriesView()}
         {activeTab === 'staff' && renderStaffView()}
       </View>
 
-      {/* MENÚ DE NAVEGACIÓN INFERIOR (Solo 2 botones) */}
+      {/* MENÚ DE NAVEGACIÓN INFERIOR (2 pestañas) */}
       <View style={styles.navigationBar}>
         <Pressable
           style={[styles.navButton, activeTab === 'categories' && styles.navButtonActive]}
@@ -221,8 +231,10 @@ const styles = StyleSheet.create({
 
   searchInput: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, fontSize: 15, color: '#1E293B', marginBottom: 16 },
   
+  // Estilos de la tarjeta compacta de doctor (como al inicio)
   doctorCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' },
-  doctorAvatar: { width: 50, height: 50, borderRadius: 25, marginRight: 14 },
+  doctorAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#E0F2FE', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  avatarLetter: { fontSize: 16, fontWeight: '700', color: '#0284C7' },
   itemName: { fontSize: 16, fontWeight: '700', color: '#1E293B' },
   itemCategory: { fontSize: 12, color: '#64748B', marginTop: 2, textTransform: 'uppercase', fontWeight: '600' },
   doctorPhone: { fontSize: 13, color: '#0284C7', fontWeight: '600', marginTop: 2 },
