@@ -6,6 +6,7 @@ import { RootTabParamList, HomeStackParamList } from './types';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DetailScreen } from '../screens/DetailScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { useSavedStore } from '../stores/savedStore';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -20,11 +21,20 @@ function HomeStack() {
 }
 
 export function RootNavigator() {
+  const savedCount = useSavedStore((state) => state.savedItems.length);
+
   return (
     <NavigationContainer>
       <Tab.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: '#0284C7' }}>
         <Tab.Screen name="HomeStack" component={HomeStack} options={{ title: 'Inicio' }} />
-        <Tab.Screen name="FavoritesScreen" component={FavoritesScreen} options={{ title: 'Guardados' }} />
+        <Tab.Screen
+          name="FavoritesScreen"
+          component={FavoritesScreen}
+          options={{
+            title: 'Guardados',
+            tabBarBadge: savedCount > 0 ? savedCount : undefined,
+          }}
+        />
       </Tab.Navigator>
     </NavigationContainer>
   );

@@ -1,12 +1,24 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Image, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { HomeStackParamList } from '../navigation/types';
+import { useSavedStore } from '../stores/savedStore';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailScreen'>;
 
 export const DetailScreen: React.FC<Props> = ({ route }) => {
   const { item } = route.params;
+  const addItem = useSavedStore((state) => state.addItem);
+  const removeItem = useSavedStore((state) => state.removeItem);
+  const isSaved = useSavedStore((state) => state.isItemSaved(item.id));
+
+  const handleToggleSave = () => {
+    if (isSaved) {
+      removeItem(item.id);
+    } else {
+      addItem(item);
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.detailContainer} showsVerticalScrollIndicator={false}>
@@ -24,6 +36,15 @@ export const DetailScreen: React.FC<Props> = ({ route }) => {
         <Text style={styles.detailText}>
           {item.detailedDescription || 'Información clínica especializada en proceso de actualización institucional.'}
         </Text>
+
+        <Pressable
+          style={[styles.saveButton, isSaved ? styles.buttonRemove : styles.buttonAdd]}
+          onPress={handleToggleSave}
+        >
+          <Text style={styles.saveButtonText}>
+            {isSaved ? '♥ Quitar de Guardados' : '♡ Guardar Tratamiento'}
+          </Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -38,4 +59,8 @@ const styles = StyleSheet.create({
   detailDuration: { fontSize: 14, color: '#059669', fontWeight: '700', marginBottom: 16 },
   detailSectionLabel: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginTop: 14, marginBottom: 6 },
   detailText: { fontSize: 14, color: '#475569', lineHeight: 22 },
+  saveButton: { marginTop: 24, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  buttonAdd: { backgroundColor: '#0284C7' },
+  buttonRemove: { backgroundColor: '#EF4444' },
+  saveButtonText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
 });
