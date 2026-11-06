@@ -1,6 +1,6 @@
 ﻿import { FertilityService } from '../types';
 
-export const FERTILITY_SERVICES: FertilityService[] = [
+export const mockFertilityServices: FertilityService[] = [
   {
     id: '1',
     title: 'Fecundación In Vitro (FIV)',
@@ -9,7 +9,6 @@ export const FERTILITY_SERVICES: FertilityService[] = [
     detailedDescription: 'La Fecundación In Vitro (FIV) es uno de los tratamientos de reproducción asistida más avanzados. Consiste en extraer los óvulos de los ovarios de la paciente para fecundarlos con los espermatozoides en el laboratorio. Posteriormente, el embrión resultante de alta calidad se transfiere al útero para lograr el embarazo.',
     durationWeeks: 4,
     imageUrl: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&auto=format&fit=crop&q=80',
-    isPopular: true,
   },
   {
     id: '2',
@@ -28,7 +27,6 @@ export const FERTILITY_SERVICES: FertilityService[] = [
     detailedDescription: 'Técnica avanzada de congelación ultrarrápida (vitrificación) que evita la formación de cristales de hielo, protegiendo las células reproductoras (óvulos o semen) con tasas de supervivencia altísimas, permitiendo a los pacientes postergar su maternidad/paternidad con total garantía.',
     durationWeeks: 3,
     imageUrl: 'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?w=600&auto=format&fit=crop&q=80',
-    isPopular: true,
   },
   {
     id: '4',
@@ -47,7 +45,6 @@ export const FERTILITY_SERVICES: FertilityService[] = [
     detailedDescription: 'Proceso en el cual una donante anónima y rigurosamente seleccionada aporta sus óvulos para ser fecundados con el esperma de la pareja (o donante). Es la alternativa con mayor tasa de éxito para mujeres con menopausia precoz o baja calidad ovocitaria.',
     durationWeeks: 4,
     imageUrl: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&auto=format&fit=crop&q=80',
-    isPopular: true,
   },
   {
     id: '6',

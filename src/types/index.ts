@@ -1,10 +1,9 @@
 ﻿export interface FertilityService {
-  id: string;
+  id: string | number;
   title: string;
-  category: string;
   description: string;
   detailedDescription?: string;
+  category: string;
   durationWeeks: number;
-  imageUrl: string;
-  isPopular?: boolean;
+  imageUrl?: string;
 }
