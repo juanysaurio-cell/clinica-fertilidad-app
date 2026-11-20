@@ -1,6 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { FertilityService } from '../types';
+import {
+  FertilityService,
+  CreateItemPayload,
+  UpdateItemPayload,
+} from '../types';
 
 export const SERVICES_QUERY_KEY = ['fertility-services'];
 
@@ -10,20 +14,12 @@ interface RawServiceItem {
   category?: string;
   description?: string;
   detailedDescription?: string;
-  body?: string;
   durationWeeks?: number;
   imageUrl?: string;
   isCustomCreated?: boolean;
 }
 
-const SPANISH_TREATMENTS: Array<{
-  title: string;
-  category: string;
-  description: string;
-  detailedDescription: string;
-  durationWeeks: number;
-  imageUrl: string;
-}> = [
+const SPANISH_TREATMENTS: Array<Omit<FertilityService, 'id'>> = [
   {
     title: 'Fecundación In Vitro (FIV)',
     category: 'Alta Complejidad',
@@ -129,7 +125,8 @@ const mapToService = (raw: RawServiceItem, index = 0): FertilityService => {
       title: raw.title || fallback.title,
       category: raw.category || fallback.category,
       description: raw.description || fallback.description,
-      detailedDescription: raw.detailedDescription || raw.description || fallback.detailedDescription,
+      detailedDescription:
+        raw.detailedDescription || raw.description || fallback.detailedDescription,
       durationWeeks: Number(raw.durationWeeks) || fallback.durationWeeks,
       imageUrl: raw.imageUrl || fallback.imageUrl,
     };
@@ -158,15 +155,116 @@ export function useItems() {
 }
 
 export function useItemById(id: string) {
+  const queryClient = useQueryClient();
   const isCustom = String(id).startsWith('custom-');
 
   return useQuery<FertilityService, Error>({
     queryKey: [...SERVICES_QUERY_KEY, id],
     queryFn: async () => {
+      const cachedList =
+        queryClient.getQueryData<FertilityService[]>(SERVICES_QUERY_KEY) ?? [];
+      const localMatch = cachedList.find((item) => String(item.id) === String(id));
+      if (localMatch) return localMatch;
+
       const { data } = await api.get<RawServiceItem>(`/posts/${id}`);
       return mapToService(data);
     },
     enabled: Boolean(id) && !isCustom,
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useCreateItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation<FertilityService, Error, CreateItemPayload>({
+    mutationFn: async (newService) => {
+      await api.post('/posts', {
+        title: newService.title,
+        body: newService.description,
+        category: newService.category,
+        durationWeeks: newService.durationWeeks,
+      });
+
+      return {
+        id: `custom-${Date.now()}`,
+        title: newService.title,
+        category: newService.category,
+        description: newService.description,
+        detailedDescription: newService.detailedDescription,
+        durationWeeks: newService.durationWeeks,
+        imageUrl:
+          newService.imageUrl ??
+          'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&auto=format&fit=crop&q=80',
+      };
+    },
+    onSuccess: (createdItem) => {
+      queryClient.setQueryData<FertilityService[]>(
+        SERVICES_QUERY_KEY,
+        (oldData = []) => [createdItem, ...oldData]
+      );
+      queryClient.setQueryData<FertilityService>(
+        [...SERVICES_QUERY_KEY, createdItem.id],
+        createdItem
+      );
+    },
+  });
+}
+
+export function useUpdateItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    FertilityService,
+    Error,
+    { id: string; payload: UpdateItemPayload }
+  >({
+    mutationFn: async ({ id, payload }) => {
+      const numericId = Number(id);
+      if (
+        !String(id).startsWith('custom-') &&
+        Number.isFinite(numericId) &&
+        numericId > 0
+      ) {
+        await api.put(`/posts/${numericId}`, {
+          id: numericId,
+          title: payload.title,
+          body: payload.description,
+        });
+      }
+
+      const cachedList =
+        queryClient.getQueryData<FertilityService[]>(SERVICES_QUERY_KEY) ?? [];
+      const current =
+        cachedList.find((item) => String(item.id) === String(id)) ??
+        queryClient.getQueryData<FertilityService>([...SERVICES_QUERY_KEY, id]);
+
+      return {
+        id: String(id),
+        title: payload.title ?? current?.title ?? 'Tratamiento',
+        category: payload.category ?? current?.category ?? 'General',
+        description: payload.description ?? current?.description ?? '',
+        detailedDescription:
+          payload.detailedDescription ?? current?.detailedDescription,
+        durationWeeks: payload.durationWeeks ?? current?.durationWeeks ?? 4,
+        imageUrl:
+          payload.imageUrl ??
+          current?.imageUrl ??
+          'https://images.unsplash.com/photo-1579154204601-01588f351e67?w=600&auto=format&fit=crop&q=80',
+      };
+    },
+    onSuccess: (updatedItem) => {
+      queryClient.setQueryData<FertilityService[]>(
+        SERVICES_QUERY_KEY,
+        (oldData = []) =>
+          oldData.map((item) =>
+            String(item.id) === String(updatedItem.id) ? updatedItem : item
+          )
+      );
+      queryClient.setQueryData<FertilityService>(
+        [...SERVICES_QUERY_KEY, updatedItem.id],
+        updatedItem
+      );
+    },
   });
 }

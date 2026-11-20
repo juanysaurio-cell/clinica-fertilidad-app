@@ -8,4 +8,6 @@
   imageUrl?: string;
 }
 
-export type CreateFertilityServiceInput = Omit<FertilityService, 'id'>;
+export type Item = FertilityService;
+export type CreateItemPayload = Omit<FertilityService, 'id'>;
+export type UpdateItemPayload = Partial<CreateItemPayload>;

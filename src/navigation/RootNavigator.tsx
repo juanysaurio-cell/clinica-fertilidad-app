@@ -1,3 +1,4 @@
+// src/navigation/RootNavigator.tsx
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -5,6 +6,7 @@ import { HomeStackParamList, RootTabParamList } from './types';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DetailScreen } from '../screens/DetailScreen';
 import { CreateScreen } from '../screens/CreateScreen';
+import { EditScreen } from '../screens/EditScreen';
 import { SavedScreen } from '../screens/SavedScreen';
 import { useSavedStore } from '../stores/savedStore';
 
@@ -35,6 +37,11 @@ function HomeStack() {
         name="CreateScreen"
         component={CreateScreen}
         options={{ title: 'Nuevo Tratamiento' }}
+      />
+      <Stack.Screen
+        name="EditScreen"
+        component={EditScreen}
+        options={{ title: 'Editar Tratamiento' }}
       />
     </Stack.Navigator>
   );

@@ -17,7 +17,7 @@ import { FertilityService } from '../types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailScreen'>;
 
-export const DetailScreen: React.FC<Props> = ({ route }) => {
+export const DetailScreen: React.FC<Props> = ({ route, navigation }) => {
   const { id, item: initialItem } = route.params;
   const { data, isLoading, isError, refetch } = useItemById(id);
 
@@ -112,6 +112,22 @@ export const DetailScreen: React.FC<Props> = ({ route }) => {
           <Pressable
             accessibilityRole="button"
             style={({ pressed }) => [
+              styles.editBtn,
+              pressed && styles.pressedBtn,
+            ]}
+            onPress={() =>
+              navigation.navigate('EditScreen', {
+                id: service.id,
+                item: service,
+              })
+            }
+          >
+            <Text style={styles.saveBtnText}>Editar Tratamiento</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityRole="button"
+            style={({ pressed }) => [
               styles.saveBtn,
               isSaved ? styles.removeSaveBtn : styles.addSaveBtn,
               pressed && styles.pressedBtn,
@@ -157,8 +173,18 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   text: { fontSize: 15, color: '#334155', lineHeight: 22 },
-  saveBtn: {
+  editBtn: {
     marginTop: 24,
+    backgroundColor: '#0F766E',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  saveBtn: {
+    marginTop: 12,
     marginBottom: 16,
     paddingVertical: 15,
     paddingHorizontal: 20,

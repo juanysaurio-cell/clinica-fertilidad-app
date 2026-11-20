@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   StyleSheet,
   ScrollView,
@@ -12,60 +11,60 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { HomeStackParamList } from '../navigation/types';
-import { useCreateItem } from '../hooks/useCreateItem';
+import {
+  itemSchema,
+  ItemFormInput,
+  ItemFormData,
+} from '../schemas/itemSchema';
+import { FormField } from '../components/FormField';
+import { useCreateItem } from '../hooks/useItems';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'CreateScreen'>;
 
 export const CreateScreen: React.FC<Props> = ({ navigation }) => {
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Alta Complejidad');
-  const [durationWeeks, setDurationWeeks] = useState('4');
-  const [description, setDescription] = useState('');
-  const [detailedDescription, setDetailedDescription] = useState('');
-
   const { mutate, isPending } = useCreateItem();
 
-  const showMessage = (heading: string, msg: string) => {
-    if (Platform.OS === 'web') {
-      window.alert(`${heading}: ${msg}`);
-    } else {
-      Alert.alert(heading, msg);
-    }
-  };
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<ItemFormInput, unknown, ItemFormData>({
+    resolver: zodResolver(itemSchema),
+    defaultValues: {
+      title: '',
+      category: 'Alta Complejidad',
+      durationWeeks: 4,
+      description: '',
+      detailedDescription: '',
+    },
+  });
 
-  const handleSave = () => {
-    const cleanTitle = title.trim();
-    const cleanDescription = description.trim();
+  const busy = isPending || isSubmitting;
 
-    if (!cleanTitle || !cleanDescription) {
-      showMessage(
-        'Datos incompletos',
-        'Completa al menos el nombre del tratamiento y la descripción general.'
-      );
-      return;
-    }
-
-    const parsedWeeks = Number(durationWeeks);
+  const onSubmit = (values: ItemFormInput) => {
+    const parsed = itemSchema.parse(values);
 
     mutate(
       {
-        title: cleanTitle,
-        category: category.trim() || 'General',
-        durationWeeks:
-          Number.isFinite(parsedWeeks) && parsedWeeks > 0 ? parsedWeeks : 4,
-        description: cleanDescription,
-        detailedDescription: detailedDescription.trim() || undefined,
+        title: parsed.title,
+        category: parsed.category,
+        durationWeeks: parsed.durationWeeks,
+        description: parsed.description,
+        detailedDescription: parsed.detailedDescription || undefined,
       },
       {
         onSuccess: () => {
           navigation.goBack();
         },
         onError: (err) => {
-          showMessage(
-            'Error al crear',
-            err.message || 'No se pudo enviar el registro.'
-          );
+          if (Platform.OS === 'web') {
+            window.alert(`Error al crear: ${err.message}`);
+          } else {
+            Alert.alert('Error al crear', err.message);
+          }
         },
       }
     );
@@ -78,52 +77,44 @@ export const CreateScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.form}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.label}>Nombre del tratamiento *</Text>
-        <TextInput
-          style={styles.input}
+        <FormField
+          name="title"
+          control={control}
+          label="Nombre del tratamiento *"
           placeholder="Ej: Estimulación ovárica controlada"
-          placeholderTextColor="#94A3B8"
-          value={title}
-          onChangeText={setTitle}
         />
 
-        <Text style={styles.label}>Categoría</Text>
-        <TextInput
-          style={styles.input}
+        <FormField
+          name="category"
+          control={control}
+          label="Categoría *"
           placeholder="Ej: Alta Complejidad, Diagnóstico..."
-          placeholderTextColor="#94A3B8"
-          value={category}
-          onChangeText={setCategory}
         />
 
-        <Text style={styles.label}>Duración estimada (semanas)</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
+        <FormField
+          name="durationWeeks"
+          control={control}
+          label="Duración estimada (semanas) *"
           placeholder="4"
-          placeholderTextColor="#94A3B8"
-          value={durationWeeks}
-          onChangeText={setDurationWeeks}
+          isNumeric
         />
 
-        <Text style={styles.label}>Descripción general *</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
+        <FormField
+          name="description"
+          control={control}
+          label="Descripción general *"
           placeholder="Resumen breve del tratamiento..."
-          placeholderTextColor="#94A3B8"
           multiline
-          value={description}
-          onChangeText={setDescription}
+          style={styles.textArea}
         />
 
-        <Text style={styles.label}>Detalles clínicos (opcional)</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
+        <FormField
+          name="detailedDescription"
+          control={control}
+          label="Detalles clínicos (opcional)"
           placeholder="Información adicional del procedimiento..."
-          placeholderTextColor="#94A3B8"
           multiline
-          value={detailedDescription}
-          onChangeText={setDetailedDescription}
+          style={styles.textArea}
         />
 
         <View style={styles.buttonWrapper}>
@@ -131,13 +122,13 @@ export const CreateScreen: React.FC<Props> = ({ navigation }) => {
             accessibilityRole="button"
             style={({ pressed }) => [
               styles.submitBtn,
-              isPending && styles.disabledBtn,
-              pressed && !isPending && styles.pressedBtn,
+              busy && styles.disabledBtn,
+              pressed && !busy && styles.pressedBtn,
             ]}
-            onPress={handleSave}
-            disabled={isPending}
+            onPress={handleSubmit(onSubmit)}
+            disabled={busy}
           >
-            {isPending ? (
+            {busy ? (
               <ActivityIndicator color="#FFF" />
             ) : (
               <Text style={styles.submitText}>Guardar tratamiento</Text>
@@ -153,22 +144,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   scroll: { flex: 1 },
   form: { flexGrow: 1, padding: 20, paddingBottom: 48 },
-  label: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 15,
-    color: '#0F172A',
-  },
   textArea: { height: 90, textAlignVertical: 'top' },
   buttonWrapper: { marginTop: 24, marginBottom: 16 },
   submitBtn: {
