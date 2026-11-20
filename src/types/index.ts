@@ -1,9 +1,11 @@
 ﻿export interface FertilityService {
-  id: string | number;
+  id: string;
   title: string;
+  category: string;
   description: string;
   detailedDescription?: string;
-  category: string;
   durationWeeks: number;
   imageUrl?: string;
 }
+
+export type CreateFertilityServiceInput = Omit<FertilityService, 'id'>;

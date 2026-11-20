@@ -1,50 +1,125 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Pressable, ScrollView, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Pressable,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { HomeStackParamList } from '../navigation/RootNavigator';
+import { HomeStackParamList } from '../navigation/types';
+import { useItemById } from '../hooks/useItems';
 import { useSavedStore } from '../stores/savedStore';
+import { FertilityService } from '../types';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'DetailScreen'>;
 
 export const DetailScreen: React.FC<Props> = ({ route }) => {
-  const { item } = route.params;
-  
-  // Forzamos la suscripción directa al arreglo de guardados para que React reaccione sí o sí al cambio
+  const { id, item: initialItem } = route.params;
+  const { data, isLoading, isError, refetch } = useItemById(id);
+
   const savedItems = useSavedStore((state) => state.savedItems);
   const addItem = useSavedStore((state) => state.addItem);
   const removeItem = useSavedStore((state) => state.removeItem);
-  
-  const saved = savedItems.some((i) => String(i.id) === String(item.id));
+
+  const service: FertilityService | undefined = data
+    ? {
+        ...initialItem,
+        ...data,
+        title: data.title || initialItem?.title || 'Tratamiento de Fertilidad',
+        category: data.category || initialItem?.category || 'Reproducción Asistida',
+        description: data.description || initialItem?.description || '',
+        detailedDescription:
+          data.detailedDescription || initialItem?.detailedDescription,
+        durationWeeks: data.durationWeeks || initialItem?.durationWeeks || 4,
+        imageUrl: data.imageUrl || initialItem?.imageUrl,
+      }
+    : initialItem;
+
+  const isSaved = service
+    ? savedItems.some((saved) => String(saved.id) === String(service.id))
+    : false;
+
+  const handleToggleSaved = () => {
+    if (!service) return;
+    if (isSaved) {
+      removeItem(service.id);
+    } else {
+      addItem({
+        ...service,
+        id: String(service.id),
+      });
+    }
+  };
+
+  if (isLoading && !service) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#0284C7" />
+        <Text style={styles.statusText}>Cargando información del tratamiento...</Text>
+      </View>
+    );
+  }
+
+  if (isError && !service) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorTitle}>Error al cargar el detalle</Text>
+        <Pressable
+          accessibilityRole="button"
+          style={styles.retryBtn}
+          onPress={() => refetch()}
+        >
+          <Text style={styles.retryText}>Reintentar</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (!service) return null;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView>
-        {item.imageUrl && <Image source={{ uri: item.imageUrl }} style={styles.image} />}
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {service.imageUrl && (
+          <Image source={{ uri: service.imageUrl }} style={styles.image} />
+        )}
         <View style={styles.content}>
-          <View style={styles.headerRow}>
-            <Text style={styles.category}>{item.category}</Text>
-            {saved && <Text style={styles.badgeText}>Guardado en Favoritos</Text>}
-          </View>
-          
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.duration}>⏱️ Duración estimada: {item.durationWeeks} semanas</Text>
+          <Text style={styles.category}>{service.category}</Text>
+          <Text style={styles.title}>{service.title}</Text>
+          <Text style={styles.duration}>
+            Duración estimada: {service.durationWeeks} semanas
+          </Text>
 
           <Text style={styles.sectionTitle}>Descripción General</Text>
-          <Text style={styles.text}>{item.description}</Text>
+          <Text style={styles.text}>{service.description}</Text>
 
-          {item.detailedDescription && (
+          {service.detailedDescription && (
             <>
-              <Text style={styles.sectionTitle}>Detalles Clínicos del Procedimiento</Text>
-              <Text style={styles.text}>{item.detailedDescription}</Text>
+              <Text style={styles.sectionTitle}>
+                Detalles Clínicos del Procedimiento
+              </Text>
+              <Text style={styles.text}>{service.detailedDescription}</Text>
             </>
           )}
 
           <Pressable
-            style={[styles.mainButton, saved ? styles.removeMainBtn : styles.saveMainBtn]}
-            onPress={() => (saved ? removeItem(item.id) : addItem(item))}
+            accessibilityRole="button"
+            style={({ pressed }) => [
+              styles.saveBtn,
+              isSaved ? styles.removeSaveBtn : styles.addSaveBtn,
+              pressed && styles.pressedBtn,
+            ]}
+            onPress={handleToggleSaved}
           >
-            <Text style={styles.mainButtonText}>
-              {saved ? 'Eliminar Tratamiento' : 'Guardar Tratamiento'}
+            <Text style={styles.saveBtnText}>
+              {isSaved ? 'Eliminar Tratamiento' : 'Guardar Tratamiento'}
             </Text>
           </Pressable>
         </View>
@@ -55,17 +130,54 @@ export const DetailScreen: React.FC<Props> = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  image: { width: '100%', height: 220 },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingBottom: 48 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  image: { width: '100%', height: 190 },
   content: { padding: 20 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  category: { fontSize: 12, fontWeight: '700', color: '#0284C7', textTransform: 'uppercase' },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#059669', backgroundColor: '#D1FAE5', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  title: { fontSize: 24, fontWeight: '800', color: '#0F172A', marginTop: 4, marginBottom: 8 },
-  duration: { fontSize: 14, color: '#64748B', marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1E293B', marginTop: 16, marginBottom: 6 },
+  category: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0284C7',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  title: { fontSize: 22, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
+  duration: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 16,
+    fontWeight: '600',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E293B',
+    marginTop: 12,
+    marginBottom: 6,
+  },
   text: { fontSize: 15, color: '#334155', lineHeight: 22 },
-  mainButton: { marginTop: 30, padding: 16, borderRadius: 12, alignItems: 'center' },
-  saveMainBtn: { backgroundColor: '#0284C7' },
-  removeMainBtn: { backgroundColor: '#EF4444' },
-  mainButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  saveBtn: {
+    marginTop: 24,
+    marginBottom: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  addSaveBtn: { backgroundColor: '#0284C7' },
+  removeSaveBtn: { backgroundColor: '#DC2626' },
+  pressedBtn: { opacity: 0.85 },
+  saveBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  statusText: { fontSize: 14, color: '#64748B', marginTop: 8 },
+  errorTitle: { fontSize: 16, fontWeight: '700', color: '#DC2626', marginBottom: 10 },
+  retryBtn: {
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: { color: '#FFF', fontWeight: '700' },
 });
